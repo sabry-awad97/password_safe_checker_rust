@@ -1,0 +1,12 @@
+{
+  "name": "general_project",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/sabry-awad97/password_safe_checker_rust.git",
+  "author": "Sabry Awad <dr.sabry1997@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "@types/node": "^18.13.0",
+    "axios": "^1.3.3"
+  }
+}
