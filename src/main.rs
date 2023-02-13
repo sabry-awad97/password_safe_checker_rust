@@ -71,7 +71,6 @@ async fn check_password(
         status: get_password_status(&api_response, tail),
     })
 }
-
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     let api = API {
@@ -80,18 +79,23 @@ async fn main() -> Result<(), Error> {
     let mut password_hasher = PasswordHasher::new();
     let args: Vec<String> = std::env::args().collect();
 
-    let password = &args[1];
+    if args.len() < 2 {
+        println!("Please provide at least one password as a command-line argument.");
+        return Ok(());
+    }
 
-    let result = check_password(&api, &mut password_hasher, password).await;
-    match result {
-        Ok(PasswordCheckResult { password, status }) => match status {
-            PasswordCheckStatus::Compromised(count) => println!(
-                "The password: {} has been compromised {} times!. Consider changing it.",
-                password, count
-            ),
-            PasswordCheckStatus::Safe => println!("The password: {} is safe!", password),
-        },
-        Err(e) => println!("An error occurred: {}", e),
+    for password in &args[1..] {
+        let result = check_password(&api, &mut password_hasher, password).await;
+        match result {
+            Ok(PasswordCheckResult { password, status }) => match status {
+                PasswordCheckStatus::Compromised(count) => println!(
+                    "The password: {} has been compromised {} times!. Consider changing it.",
+                    password, count
+                ),
+                PasswordCheckStatus::Safe => println!("The password: {} is safe!", password),
+            },
+            Err(e) => println!("An error occurred: {}", e),
+        }
     }
 
     Ok(())
