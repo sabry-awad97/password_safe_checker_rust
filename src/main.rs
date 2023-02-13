@@ -1,3 +1,4 @@
+use futures::future::join_all;
 use reqwest::Error;
 use sha1::{Digest, Sha1};
 use std::collections::HashMap;
@@ -57,11 +58,8 @@ fn get_password_status(api_response: &str, hash_to_check: &str) -> PasswordCheck
     }
 }
 
-async fn check_password(
-    api: &API,
-    password_hasher: &mut PasswordHasher,
-    password: &str,
-) -> Result<PasswordCheckResult, Error> {
+async fn check_password(api: &API, password: &str) -> Result<PasswordCheckResult, Error> {
+    let mut password_hasher = PasswordHasher::new();
     let sha1_password = password_hasher.hash_password(password);
     let first_5_chars = &sha1_password[..5];
     let tail = &sha1_password[5..];
@@ -71,12 +69,13 @@ async fn check_password(
         status: get_password_status(&api_response, tail),
     })
 }
+
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     let api = API {
         client: reqwest::Client::new(),
     };
-    let mut password_hasher = PasswordHasher::new();
+
     let args: Vec<String> = std::env::args().collect();
 
     if args.len() < 2 {
@@ -84,8 +83,13 @@ async fn main() -> Result<(), Error> {
         return Ok(());
     }
 
-    for password in &args[1..] {
-        let result = check_password(&api, &mut password_hasher, password).await;
+    let password_checks = args[1..]
+        .iter()
+        .map(|password| check_password(&api, password));
+
+    let results = join_all(password_checks).await;
+
+    for result in results {
         match result {
             Ok(PasswordCheckResult { password, status }) => match status {
                 PasswordCheckStatus::Compromised(count) => println!(
