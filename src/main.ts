@@ -57,8 +57,8 @@ async function checkPassword(
 ): Promise<PasswordCheckResult> {
   const passwordHasher = new PasswordHasher();
   const sha1Password = passwordHasher.hashPassword(password);
-  const first5Chars = sha1Password.substr(0, 5);
-  const tail = sha1Password.substr(5);
+  const first5Chars = sha1Password.substring(0, 5);
+  const tail = sha1Password.substring(5);
   const apiResponse = await api.getPasswordLeaks(first5Chars);
   return { password, status: getPasswordStatus(apiResponse, tail) };
 }
